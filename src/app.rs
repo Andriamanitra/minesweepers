@@ -1,10 +1,10 @@
-pub struct TemplateApp {
+pub struct MinesweeperApp {
     // Example stuff:
     label: String,
     value: f32,
 }
 
-impl Default for TemplateApp {
+impl Default for MinesweeperApp {
     fn default() -> Self {
         Self {
             // Example stuff:
@@ -14,7 +14,7 @@ impl Default for TemplateApp {
     }
 }
 
-impl TemplateApp {
+impl MinesweeperApp {
     /// Called once before the first frame.
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
@@ -24,7 +24,7 @@ impl TemplateApp {
     }
 }
 
-impl eframe::App for TemplateApp {
+impl eframe::App for MinesweeperApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {

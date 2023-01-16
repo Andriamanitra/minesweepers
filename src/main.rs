@@ -9,9 +9,9 @@ fn main() {
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
-        "eframe template",
+        "Minesweeper",
         native_options,
-        Box::new(|cc| Box::new(minesweeper::TemplateApp::new(cc))),
+        Box::new(|cc| Box::new(minesweeper::MinesweeperApp::new(cc))),
     );
 }
 
