@@ -265,6 +265,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cloudabi"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "cmake"
 version = "0.1.49"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -522,17 +531,15 @@ dependencies = [
 [[package]]
 name = "ecolor"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b601108bca3af7650440ace4ca55b2daf52c36f2635be3587d77b16efd8d0691"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "bytemuck",
 ]
 
 [[package]]
 name = "eframe"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8128828b785ecf1552917330354ab2eb9d2c48fbe2ad075fa75f93d4a099a9f1"
+version = "0.20.1"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "bytemuck",
  "egui",
@@ -543,6 +550,7 @@ dependencies = [
  "js-sys",
  "percent-encoding",
  "raw-window-handle 0.5.0",
+ "thiserror",
  "tracing",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -552,9 +560,8 @@ dependencies = [
 
 [[package]]
 name = "egui"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a4daecd807bfd4e30ad92f049b03d92f506a3fddfad852babaa03cba180adfa"
+version = "0.20.1"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "accesskit",
  "ahash",
@@ -565,9 +572,8 @@ dependencies = [
 
 [[package]]
 name = "egui-winit"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2217c2c1e63b7b793753efd23dc68efb86bb09bd298e5de8010e9a82dc63f0a9"
+version = "0.20.1"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "accesskit_winit",
  "arboard",
@@ -581,9 +587,8 @@ dependencies = [
 
 [[package]]
 name = "egui_glow"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67655a7138ce9d9617811622a3d81577fb477f4447f1a330e89814f16ad35574"
+version = "0.20.1"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "bytemuck",
  "egui",
@@ -597,8 +602,7 @@ dependencies = [
 [[package]]
 name = "emath"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5277249c8c3430e7127e4f2c40a77485e7baf11ae132ce9b3253a8ed710df0a0"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "bytemuck",
 ]
@@ -627,8 +631,7 @@ dependencies = [
 [[package]]
 name = "epaint"
 version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de14b65fe5e423e0058f77a8beb2c863b056d0566d6c4ce0d097aa5814cb705a"
+source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
 dependencies = [
  "ab_glyph",
  "ahash",
@@ -748,6 +751,12 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[package]]
+name = "fuchsia-cprng"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
 
 [[package]]
 name = "gethostname"
@@ -987,6 +996,7 @@ dependencies = [
  "console_error_panic_hook",
  "eframe",
  "egui",
+ "rand",
  "tracing-subscriber",
  "tracing-wasm",
  "wasm-bindgen-futures",
@@ -1312,6 +1322,34 @@ checksum = "bbe448f377a7d6961e30f5955f9b8d106c3f5e449d493ee1b125c1d43c2b5179"
 dependencies = [
  "proc-macro2",
 ]
+
+[[package]]
+name = "rand"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c618c47cd3ebd209790115ab837de41425723956ad3ce2e6a7f09890947cacb9"
+dependencies = [
+ "cloudabi",
+ "fuchsia-cprng",
+ "libc",
+ "rand_core 0.3.1",
+ "winapi",
+]
+
+[[package]]
+name = "rand_core"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a6fdeb83b075e8266dcc8762c22776f6877a63111121f5f8c7411e5be7eed4b"
+dependencies = [
+ "rand_core 0.4.2",
+]
+
+[[package]]
+name = "rand_core"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c33a3c44ca05fa6f1807d8e6743f3824e8509beca625669633be0acbdf509dc"
 
 [[package]]
 name = "raw-window-handle"
@@ -2155,13 +2193,3 @@ name = "xml-rs"
 version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2d7d3948613f75c98fd9328cfdcc45acc4d360655289d0a7d4ec931392200a3"
-
-[[patch.unused]]
-name = "eframe"
-version = "0.20.1"
-source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
-
-[[patch.unused]]
-name = "egui"
-version = "0.20.1"
-source = "git+https://github.com/emilk/egui?branch=master#cd0f66b9ae661be737ce57f26fb305cf124f6b73"
