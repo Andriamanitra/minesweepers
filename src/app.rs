@@ -110,7 +110,7 @@ impl eframe::App for MinesweeperApp {
                             );
                             if mf_button.clicked() {
                                 if !started {
-                                    populate(&mut self.minefield, self.num_mines);
+                                    populate(&mut self.minefield, self.num_mines, (r, c));
                                     self.game_started = true;
                                 }
                                 match self.minefield[r][c] {
@@ -143,16 +143,19 @@ impl eframe::App for MinesweeperApp {
     }
 }
 
-fn populate(field: &mut Minefield, num_mines: usize) {
+fn populate(field: &mut Minefield, num_mines: usize, clicked_pos: (usize, usize)) {
     for row in field.as_mut_slice() {
         row.fill(Place::Hidden(0));
     }
     let height = field.len();
     let width = field.first().unwrap().len();
     let mut rng = rand::thread_rng();
-    for i in seq::index::sample(&mut rng, width * height, num_mines) {
-        let r = i / width;
-        let c = i % width;
+    for (r, c) in seq::index::sample(&mut rng, width * height, num_mines + 1)
+        .iter()
+        .map(|i| (i / width, i % width))
+        .filter(|x| *x != clicked_pos)
+        .take(num_mines)
+    {
         field[r][c] = Place::Mine;
         for row in field.iter_mut().take(r + 2).skip(r.saturating_sub(1)) {
             for elem in row.iter_mut().take(c + 2).skip(c.saturating_sub(1)) {
