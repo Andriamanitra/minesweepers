@@ -1,0 +1,5 @@
+{
+    "code-runner.executorMapByGlob": {
+        "*": "cargo run # $fileName"
+    }
+}
