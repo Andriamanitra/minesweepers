@@ -228,10 +228,13 @@ impl MinesweeperApp {
                         }
                     };
                     if mf_button.secondary_clicked() {
-                        if let Some(_) = self.minefield.secondary_click(r, c) {
-                            if self.minefield.is_solved() {
-                                self.game_state = GameState::Won;
-                            }
+                        if self.game_state == GameState::NotStarted {
+                            self.minefield.populate(self.num_mines, (1337, 1337));
+                            self.game_state = GameState::InProgress;
+                        }
+                        self.minefield.secondary_click(r, c);
+                        if self.minefield.is_solved() {
+                            self.game_state = GameState::Won;
                         }
                     }
                 }
