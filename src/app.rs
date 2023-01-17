@@ -79,6 +79,9 @@ impl eframe::App for MinesweeperApp {
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Side Panel");
+            if ui.button("New game").clicked() {
+                self.reset();
+            }
             egui::warn_if_debug_build(ui);
         });
 
