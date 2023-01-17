@@ -1,15 +1,21 @@
+use egui::Vec2;
+
 pub struct MinesweeperApp {
-    // Example stuff:
-    label: String,
-    value: f32,
+    field_width: u32,
+    field_height: u32,
+    num_mines: u32,
+    minefield_button_size: Vec2,
+    minefield_spacing: f32,
 }
 
 impl Default for MinesweeperApp {
     fn default() -> Self {
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
+            field_width: 12,
+            field_height: 8,
+            num_mines: 20,
+            minefield_button_size: Vec2 { x: 32.0, y: 32.0 },
+            minefield_spacing: 4.0,
         }
     }
 }
@@ -28,12 +34,13 @@ impl eframe::App for MinesweeperApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let Self { label, value } = self;
-
-        // Examples of how to create different panels and windows.
-        // Pick whichever suits you.
-        // Tip: a good default choice is to just keep the `CentralPanel`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+        let Self {
+            field_width,
+            field_height,
+            num_mines,
+            minefield_button_size,
+            minefield_spacing,
+        } = self;
 
         #[cfg(not(target_arch = "wasm32"))] // no File->Quit on web pages!
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
@@ -49,51 +56,29 @@ impl eframe::App for MinesweeperApp {
 
         egui::SidePanel::left("side_panel").show(ctx, |ui| {
             ui.heading("Side Panel");
-
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(label);
-            });
-
-            ui.add(egui::Slider::new(value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                *value += 1.0;
-            }
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("powered by ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(" and ");
-                    ui.hyperlink_to(
-                        "eframe",
-                        "https://github.com/emilk/egui/tree/master/crates/eframe",
-                    );
-                    ui.label(".");
-                });
-            });
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-
-            ui.heading("eframe template");
-            ui.hyperlink("https://github.com/emilk/eframe_template");
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/master/",
-                "Source code."
-            ));
             egui::warn_if_debug_build(ui);
         });
 
-        if false {
-            egui::Window::new("Window").show(ctx, |ui| {
-                ui.label("Windows can be moved by dragging them.");
-                ui.label("They are automatically sized based on contents.");
-                ui.label("You can turn on resizing and scrolling if you like.");
-                ui.label("You would normally choose either panels OR windows.");
-            });
-        }
+        egui::CentralPanel::default().show(ctx, |ui| {
+            egui::Grid::new("minefield")
+                .min_col_width(minefield_button_size.x)
+                .min_row_height(minefield_button_size.y)
+                .spacing(Vec2 {
+                    x: *minefield_spacing,
+                    y: *minefield_spacing,
+                })
+                .show(ui, |ui| {
+                    for r in 0..*field_height {
+                        for c in 0..*field_width {
+                            let mf_button =
+                                egui::widgets::Button::new("").min_size(*minefield_button_size);
+                            if ui.add(mf_button).clicked() {
+                                println!("click");
+                            };
+                        }
+                        ui.end_row();
+                    }
+                });
+        });
     }
 }
