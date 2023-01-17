@@ -1,5 +1,4 @@
-use egui::Vec2;
-use rand::seq;
+use egui::{Color32, FontId, RichText, Vec2};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Place {
@@ -9,6 +8,14 @@ pub enum Place {
     Boom,
     Hidden(usize),
     Visible(usize),
+}
+
+#[derive(PartialEq)]
+pub enum GameState {
+    NotStarted,
+    InProgress,
+    Won,
+    Lost,
 }
 
 pub struct Minefield {
@@ -31,7 +38,7 @@ impl Minefield {
             row.fill(Place::Hidden(0));
         }
         let mut rng = rand::thread_rng();
-        for (r, c) in seq::index::sample(&mut rng, self.width * self.height, num_mines + 1)
+        for (r, c) in rand::seq::index::sample(&mut rng, self.width * self.height, num_mines + 1)
             .iter()
             .map(|i| (i / self.width, i % self.width))
             .filter(|x| *x != clicked_pos)
@@ -65,9 +72,6 @@ impl Minefield {
     pub fn primary_click(&mut self, r: usize, c: usize) -> Option<&Place> {
         if let Some(place) = self.get_mut(r, c) {
             match place {
-                Place::Hidden(0) => {
-                    *place = Place::Visible(0);
-                }
                 Place::Hidden(x) => {
                     *place = Place::Visible(*x);
                 }
@@ -95,10 +99,53 @@ impl Minefield {
         }
         None
     }
+
+    fn is_solved(&self) -> bool {
+        for row in self.field.iter() {
+            for place in row {
+                match place {
+                    Place::Boom => return false,
+                    Place::Mine => return false,
+                    Place::IncorrectlyMarked(_) => return false,
+                    _ => (),
+                }
+            }
+        }
+        true
+    }
+
+    fn neighbors(&self, r: usize, c: usize) -> Vec<(usize, usize)> {
+        let mut neighbor_vec = vec![];
+        if r > 0 {
+            if c > 0 {
+                neighbor_vec.push((r - 1, c - 1));
+            }
+            neighbor_vec.push((r - 1, c));
+            if c + 1 < self.width {
+                neighbor_vec.push((r - 1, c + 1));
+            }
+        }
+        if c > 0 {
+            neighbor_vec.push((r, c - 1));
+        }
+        if c + 1 < self.width {
+            neighbor_vec.push((r, c + 1));
+        }
+        if r + 1 < self.height {
+            if c > 0 {
+                neighbor_vec.push((r + 1, c - 1));
+            }
+            neighbor_vec.push((r + 1, c));
+            if c + 1 < self.width {
+                neighbor_vec.push((r + 1, c + 1));
+            }
+        }
+        neighbor_vec
+    }
 }
 
 pub struct MinesweeperApp {
-    game_started: bool,
+    game_state: GameState,
     num_mines: usize,
     minefield: Minefield,
     minefield_button_size: Vec2,
@@ -110,7 +157,7 @@ impl Default for MinesweeperApp {
         let field_width = 12;
         let field_height = 8;
         Self {
-            game_started: false,
+            game_state: GameState::NotStarted,
             num_mines: 20,
             minefield: Minefield::new(field_width, field_height),
             minefield_button_size: Vec2 { x: 32.0, y: 32.0 },
@@ -129,7 +176,7 @@ impl MinesweeperApp {
     }
     pub fn reset(&mut self) {
         self.minefield.reset();
-        self.game_started = false;
+        self.game_state = GameState::NotStarted;
     }
 
     fn show_minefield(&mut self, ui: &mut egui::Ui) {
@@ -143,7 +190,6 @@ impl MinesweeperApp {
         grid.show(ui, |ui| {
             for r in 0..self.minefield.height {
                 for c in 0..self.minefield.width {
-                    use egui::{Color32, RichText};
                     let mf_button = ui.add(
                         egui::widgets::Button::new(match &self.minefield.get(r, c) {
                             Some(Place::Visible(x)) => RichText::new(x.to_string()),
@@ -158,17 +204,35 @@ impl MinesweeperApp {
                         .min_size(self.minefield_button_size),
                     );
                     if mf_button.clicked() {
-                        if !self.game_started {
+                        if self.game_state == GameState::NotStarted {
                             self.minefield.populate(self.num_mines, (r, c));
-                            self.game_started = true;
+                            self.game_state = GameState::InProgress;
                         }
-                        if let Some(Place::Boom) = self.minefield.primary_click(r, c) {
-                            println!("Boom! Game over!");
-                            self.game_started = false;
+                        match self.minefield.primary_click(r, c) {
+                            Some(Place::Boom) => {
+                                self.game_state = GameState::Lost;
+                            }
+                            Some(Place::Visible(0)) => {
+                                let mut q = self.minefield.neighbors(r, c);
+                                while !q.is_empty() {
+                                    let (r, c) = q.pop().unwrap();
+                                    if let Some(&Place::Hidden(x)) = self.minefield.get(r, c) {
+                                        self.minefield.primary_click(r, c);
+                                        if x == 0 {
+                                            q.extend(self.minefield.neighbors(r, c).iter());
+                                        }
+                                    }
+                                }
+                            }
+                            _ => (),
                         }
                     };
                     if mf_button.secondary_clicked() {
-                        self.minefield.secondary_click(r, c);
+                        if let Some(_) = self.minefield.secondary_click(r, c) {
+                            if self.minefield.is_solved() {
+                                self.game_state = GameState::Won;
+                            }
+                        }
                     }
                 }
                 ui.end_row();
@@ -202,6 +266,17 @@ impl eframe::App for MinesweeperApp {
             egui::warn_if_debug_build(ui);
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| self.show_minefield(ui));
+        egui::CentralPanel::default().show(ctx, |ui| {
+            self.show_minefield(ui);
+            match self.game_state {
+                GameState::Lost => {
+                    ui.label(RichText::new("Game over!").font(FontId::proportional(24.0)));
+                }
+                GameState::Won => {
+                    ui.label(RichText::new("You win!").font(FontId::proportional(24.0)));
+                }
+                _ => (),
+            }
+        });
     }
 }
