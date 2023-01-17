@@ -1,18 +1,14 @@
 use egui::Vec2;
 use rand::seq;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 enum Place {
-    CorrectlyMarked,
-    IncorrectlyMarked,
+    MarkedMine,
+    IncorrectlyMarked(usize),
     Mine,
-    Hidden,
-    Visible(usize),
-}
-
-enum BoomOrNoBoom {
     Boom,
-    NoBoom,
+    Hidden(usize),
+    Visible(usize),
 }
 
 type Minefield = Vec<Vec<Place>>;
@@ -36,7 +32,7 @@ impl Default for MinesweeperApp {
             field_width,
             field_height,
             num_mines: 20,
-            minefield: vec![vec![Place::Hidden; field_width]; field_height],
+            minefield: vec![vec![Place::Hidden(0); field_width]; field_height],
             minefield_button_size: Vec2 { x: 32.0, y: 32.0 },
             minefield_spacing: 4.0,
         }
@@ -53,7 +49,7 @@ impl MinesweeperApp {
     }
     pub fn reset(&mut self) {
         for row in self.minefield.as_mut_slice() {
-            row.fill(Place::Hidden);
+            row.fill(Place::Hidden(0));
         }
         self.game_started = false;
     }
@@ -97,32 +93,46 @@ impl eframe::App for MinesweeperApp {
                 .show(ui, |ui| {
                     for r in 0..self.field_height {
                         for c in 0..self.field_width {
-                            let button_label = match self.minefield[r][c] {
-                                Place::Visible(x) => x.to_string(),
-                                Place::CorrectlyMarked => "🚩".to_string(),
-                                Place::IncorrectlyMarked => "🚩".to_string(),
-                                _ => "".to_string(),
-                            };
+                            use egui::{Color32, RichText};
+                            let state = &self.minefield[r][c];
                             let mf_button = ui.add(
-                                egui::widgets::Button::new(button_label)
-                                    .min_size(self.minefield_button_size),
+                                egui::widgets::Button::new(match state {
+                                    Place::Visible(x) => RichText::new(x.to_string()),
+                                    Place::MarkedMine | Place::IncorrectlyMarked(_) => {
+                                        RichText::new("🚩").color(Color32::RED)
+                                    }
+                                    Place::Boom => {
+                                        RichText::new("💥").color(Color32::from_rgb(255, 135, 0))
+                                    }
+                                    _ => RichText::new(""),
+                                })
+                                .min_size(self.minefield_button_size),
                             );
                             if mf_button.clicked() {
                                 if !started {
                                     populate(&mut self.minefield, self.num_mines);
                                     self.game_started = true;
                                 }
-                                if let BoomOrNoBoom::Boom = click(&mut self.minefield, r, c) {
-                                    self.reset()
+                                match self.minefield[r][c] {
+                                    Place::Mine => {
+                                        println!("boom!");
+                                        self.minefield[r][c] = Place::Boom;
+                                        self.game_started = false;
+                                    }
+                                    Place::Hidden(x) => {
+                                        self.minefield[r][c] = Place::Visible(x);
+                                    }
+                                    _ => {}
                                 }
                             };
                             if mf_button.secondary_clicked() {
                                 self.minefield[r][c] = match self.minefield[r][c] {
-                                    Place::Mine => Place::CorrectlyMarked,
-                                    Place::Hidden => Place::IncorrectlyMarked,
-                                    Place::CorrectlyMarked => Place::Mine,
-                                    Place::IncorrectlyMarked => Place::Hidden,
+                                    Place::Mine => Place::MarkedMine,
+                                    Place::Hidden(x) => Place::IncorrectlyMarked(x),
+                                    Place::MarkedMine => Place::Mine,
+                                    Place::IncorrectlyMarked(x) => Place::Hidden(x),
                                     Place::Visible(x) => Place::Visible(x),
+                                    Place::Boom => Place::Boom,
                                 }
                             }
                         }
@@ -133,36 +143,23 @@ impl eframe::App for MinesweeperApp {
     }
 }
 
-fn click(field: &mut Minefield, r: usize, c: usize) -> BoomOrNoBoom {
-    use BoomOrNoBoom::*;
-    match field[r][c] {
-        Place::Mine => {
-            println!("boom!");
-            return Boom;
-        }
-        Place::Hidden => {
-            let mut mine_count = 0;
-            for row in field.iter().take(r + 2).skip(r.saturating_sub(1)) {
-                for element in row.iter().take(c + 2).skip(c.saturating_sub(1)) {
-                    match element {
-                        Place::Mine => mine_count += 1,
-                        Place::CorrectlyMarked => mine_count += 1,
-                        _ => {}
-                    }
-                }
-            }
-            field[r][c] = Place::Visible(mine_count);
-        }
-        _ => {}
-    }
-    NoBoom
-}
-
 fn populate(field: &mut Minefield, num_mines: usize) {
+    for row in field.as_mut_slice() {
+        row.fill(Place::Hidden(0));
+    }
     let height = field.len();
     let width = field.first().unwrap().len();
     let mut rng = rand::thread_rng();
     for i in seq::index::sample(&mut rng, width * height, num_mines) {
-        field[i / width][i % width] = Place::Mine;
+        let r = i / width;
+        let c = i % width;
+        field[r][c] = Place::Mine;
+        for row in field.iter_mut().take(r + 2).skip(r.saturating_sub(1)) {
+            for elem in row.iter_mut().take(c + 2).skip(c.saturating_sub(1)) {
+                if let Place::Hidden(x) = elem {
+                    *elem = Place::Hidden(*x + 1);
+                }
+            }
+        }
     }
 }
