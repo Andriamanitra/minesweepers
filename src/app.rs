@@ -163,9 +163,7 @@ fn populate(field: &mut Minefield, num_mines: usize) {
     let height = field.len();
     let width = field.first().unwrap().len();
     let mut rng = rand::thread_rng();
-    if let Ok(mine_indices) = seq::sample_iter(&mut rng, 0..width * height, num_mines) {
-        for i in mine_indices.iter() {
-            field[i / width][i % width] = Place::Mine;
-        }
+    for i in seq::index::sample(&mut rng, width * height, num_mines) {
+        field[i / width][i % width] = Place::Mine;
     }
 }
