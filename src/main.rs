@@ -12,7 +12,8 @@ fn main() {
         "Minesweeper",
         native_options,
         Box::new(|cc| Box::new(minesweeper::MinesweeperApp::new(cc))),
-    );
+    )
+    .expect("unable to run");
 }
 
 // when compiling to web using trunk.

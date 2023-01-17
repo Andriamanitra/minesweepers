@@ -1,5 +1,3 @@
-use std::cmp::min;
-
 use egui::Vec2;
 use rand::seq;
 
@@ -35,8 +33,8 @@ impl Default for MinesweeperApp {
         let field_height = 8;
         Self {
             game_started: false,
-            field_width: field_width,
-            field_height: field_height,
+            field_width,
+            field_height,
             num_mines: 20,
             minefield: vec![vec![Place::Hidden; field_width]; field_height],
             minefield_button_size: Vec2 { x: 32.0, y: 32.0 },
@@ -134,8 +132,6 @@ impl eframe::App for MinesweeperApp {
 
 fn click(field: &mut Minefield, r: usize, c: usize) -> BoomOrNoBoom {
     use BoomOrNoBoom::*;
-    let height = field.len();
-    let width = field.first().unwrap().len();
     match field[r][c] {
         Place::Mine => {
             println!("boom!");
@@ -143,9 +139,9 @@ fn click(field: &mut Minefield, r: usize, c: usize) -> BoomOrNoBoom {
         }
         Place::Hidden => {
             let mut mine_count = 0;
-            for nr in r.saturating_sub(1)..=min(r + 1, height - 1) {
-                for nc in c.saturating_sub(1)..=min(c + 1, width - 1) {
-                    match field[nr][nc] {
+            for row in field.iter().take(r + 2).skip(r.saturating_sub(1)) {
+                for element in row.iter().take(c + 2).skip(c.saturating_sub(1)) {
+                    match element {
                         Place::Mine => mine_count += 1,
                         Place::CorrectlyMarked => mine_count += 1,
                         _ => {}
@@ -156,7 +152,7 @@ fn click(field: &mut Minefield, r: usize, c: usize) -> BoomOrNoBoom {
         }
         _ => {}
     }
-    return NoBoom;
+    NoBoom
 }
 
 fn populate(field: &mut Minefield, num_mines: usize) {
